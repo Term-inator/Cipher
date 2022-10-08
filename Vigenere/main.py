@@ -57,22 +57,22 @@ p = {
 
 def attack(ciphertext):
     n = len(ciphertext)
-    I = [0 for i in range(26)]
-    freq = [0 for i in range(26)]
-    for char in ciphertext:
-        freq[getIndex(char)] += 1
-    for i in range(len(freq)):
-        freq[i] /= n
+    I = [0 for d in range(n)]
+    freq = [[0 for i in range(26)] for d in range(n)]
+    for d in range(2, n):
+        # 分组
+        words = [ciphertext[i:(i+d)] for i in range(0, n, d)]
+        for char in ciphertext:
+            freq[d-1][getIndex(char)] += 1
+        for i in range(len(freq[d-1])):
+            freq[d-1][i] /= n
 
-    eps = 0.005
-    res = 0
-    for key in range(0, 26):
+        eps = 0.005
         for i in range(26):
-            I[key] += p[i] * freq[(i + key) % 26]
-        if abs(I[key] - 0.065) < eps:
-            res = key
-            eps = abs(I[key] - 0.065)
-    return res
+            I[d-1] += freq[d-1][i] / d * (freq[d-1][i] - 1) / (d - 1)
+            if abs(I[d-1] - 0.0065) < eps:
+                eps = abs(I[d-1] - 0.0065)
+    return d
 
 
 def removeOtherSymbol(text):
@@ -98,7 +98,7 @@ And that's what magic is to me, so ,thank you. (Applause)'''
     text = text.upper()
     ciphertext = encrypt(text, 'TEST')
     print(f'ciphertext: {ciphertext}')
-    # key = attack(ciphertext)
-    # print(f'key: {key}')
-    plaintext = decrypt(ciphertext, 'TEST')
-    print(f'plaintext: {plaintext}')
+    key = attack(ciphertext)
+    print(f'key: {key}')
+    # plaintext = decrypt(ciphertext, 'TEST')
+    # print(f'plaintext: {plaintext}')
