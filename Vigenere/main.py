@@ -55,24 +55,75 @@ p = {
 }
 
 
-def attack(ciphertext):
-    n = len(ciphertext)
-    I = [0 for d in range(n)]
-    freq = [[0 for i in range(26)] for d in range(n)]
-    for d in range(2, n):
-        # 分组
-        words = [ciphertext[i:(i+d)] for i in range(0, n, d)]
-        for char in ciphertext:
-            freq[d-1][getIndex(char)] += 1
-        for i in range(len(freq[d-1])):
-            freq[d-1][i] /= n
+def splitText(ciphertext, group_num):
+    groups = ['' for i in range(group_num)]
+    for i in range(len(ciphertext)):
+        for j in range(group_num):
+            if i % group_num == j:
+                groups[j] += ciphertext[i]
+    return groups
 
+
+def calFreq(string):
+    freq = [0 for i in range(26)]
+    for char in string:
+        freq[getIndex(char)] += 1
+    return freq
+
+
+def calCI(freq, length):
+    CI = 0
+    for i in range(26):
+        CI += freq[i] / length * (freq[i] - 1)/(length - 1)
+    return CI
+
+
+def attack(ciphertext, limit):
+    freqs = [[[] for i in range(limit)] for i in range(limit)]  # d * d * 26
+    CIs = [[] for i in range(limit)]
+    for d in range(1, limit):
+        groups = splitText(ciphertext, d)
+
+        for i in range(d):
+            freqs[d][i] = calFreq(groups[i])
+
+        CI = []
+        for i in range(d):
+            CI.append(calCI(freqs[d][i], len(ciphertext) // d))
+        CIs[d] = CI
+
+    eps = 0.005
+    key_len = 0
+    for d in range(1, limit):
+        avg = sum(CIs[d]) / d
+        if abs(avg - 0.065) < eps:
+            key_len = d
+            eps = abs(avg - 0.065)
+
+    print(key_len)
+
+    groups = splitText(ciphertext, key_len)
+    for i in range(key_len):
+        length = len(groups[i])
+        for j in range(26):
+            freqs[key_len][i][j] /= length
+    print(freqs[key_len])
+
+    result = [0 for i in range(key_len)]
+    for j in range(key_len):
+        I = [0 for i in range(26)]
         eps = 0.005
-        for i in range(26):
-            I[d-1] += freq[d-1][i] / d * (freq[d-1][i] - 1) / (d - 1)
-            if abs(I[d-1] - 0.0065) < eps:
-                eps = abs(I[d-1] - 0.0065)
-    return d
+        res = -1
+        for key in range(0, 26):
+            for i in range(26):
+                I[key] += p[i] * freqs[key_len][j][(i + key) % 26]
+            if abs(I[key] - 0.065) < eps:
+                res = key
+                eps = abs(I[key] - 0.065)
+        if res == -1:
+            res = I.index(min(I, key=lambda x: abs(x - 0.065)))
+        result[j] = res
+    return result
 
 
 def removeOtherSymbol(text):
@@ -98,7 +149,9 @@ And that's what magic is to me, so ,thank you. (Applause)'''
     text = text.upper()
     ciphertext = encrypt(text, 'TEST')
     print(f'ciphertext: {ciphertext}')
-    key = attack(ciphertext)
+
+    limit = 11  # 秘钥长度尝试的上限
+    key = attack(ciphertext, limit)
     print(f'key: {key}')
     # plaintext = decrypt(ciphertext, 'TEST')
     # print(f'plaintext: {plaintext}')

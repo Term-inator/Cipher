@@ -65,7 +65,7 @@ def attack(ciphertext):
         freq[i] /= n
 
     eps = 0.005
-    res = 0
+    res = -1
     for key in range(0, 26):
         for i in range(26):
             I[key] += p[i] * freq[(i + key) % 26]
