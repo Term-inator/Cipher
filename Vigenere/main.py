@@ -56,6 +56,12 @@ p = {
 
 
 def splitText(ciphertext, group_num):
+    """
+    将 ciphertext 分组
+    :param ciphertext: 密文
+    :param group_num: 组数
+    :return: 分组后的列表 1 * group_num
+    """
     groups = ['' for i in range(group_num)]
     for i in range(len(ciphertext)):
         for j in range(group_num):
@@ -65,6 +71,11 @@ def splitText(ciphertext, group_num):
 
 
 def calFreq(string):
+    """
+    计算 string 各个字符的频数
+    :param string:
+    :return: 频数列表 1 * 26
+    """
     freq = [0 for i in range(26)]
     for char in string:
         freq[getIndex(char)] += 1
@@ -72,15 +83,34 @@ def calFreq(string):
 
 
 def calCI(freq, length):
+    """
+    计算 CI
+    :param freq: 某个分组的频数列表
+    :param length: 某个分组的长度
+    :return: CI 列表
+    """
     CI = 0
     for i in range(26):
         CI += freq[i] / length * (freq[i] - 1)/(length - 1)
     return CI
 
 
+def printCIs(CIs):
+    for d in range(1, len(CIs)):
+        print(f'd={d}, CI: {CIs[d]}')
+
+
 def attack(ciphertext, limit):
+    """
+    :param ciphertext:
+    :param limit: 秘钥长度尝试的上限
+    :return:
+    """
+    # 记录频数和CI
     freqs = [[[] for i in range(limit)] for i in range(limit)]  # d * d * 26
     CIs = [[] for i in range(limit)]
+
+    # 破解秘钥长度
     for d in range(1, limit):
         groups = splitText(ciphertext, d)
 
@@ -91,26 +121,28 @@ def attack(ciphertext, limit):
         for i in range(d):
             CI.append(calCI(freqs[d][i], len(ciphertext) // d))
         CIs[d] = CI
+    printCIs(CIs)
 
     eps = 0.005
     key_len = 0
     for d in range(1, limit):
-        avg = sum(CIs[d]) / d
+        avg = sum(CIs[d]) / d  # 这里选择用均值看 CI 和 0.065 的接近程度
         if abs(avg - 0.065) < eps:
             key_len = d
             eps = abs(avg - 0.065)
+    print(f'key length = {key_len}')
 
-    print(key_len)
-
+    # 得知秘钥长度后，开始破解秘钥内容
     groups = splitText(ciphertext, key_len)
     for i in range(key_len):
         length = len(groups[i])
         for j in range(26):
-            freqs[key_len][i][j] /= length
-    print(freqs[key_len])
+            freqs[key_len][i][j] /= length  # 将频数变成频率
+    # print(freqs[key_len])
 
-    result = [0 for i in range(key_len)]
+    result = [0 for i in range(key_len)]  # 存放秘钥结果
     for j in range(key_len):
+        # 秘钥的每一位在对应的组中都和 Caesar 相同
         I = [0 for i in range(26)]
         eps = 0.005
         res = -1
@@ -120,10 +152,15 @@ def attack(ciphertext, limit):
             if abs(I[key] - 0.065) < eps:
                 res = key
                 eps = abs(I[key] - 0.065)
+        # 所有的值偏差都超过 0.005 的话选最接近的那个
         if res == -1:
             res = I.index(min(I, key=lambda x: abs(x - 0.065)))
         result[j] = res
-    return result
+
+    # 把 result 数组转变成 秘钥字符串
+    for i in range(key_len):
+        result[i] = shift('A', int(result[i]))
+    return ''.join(result)
 
 
 def removeOtherSymbol(text):
@@ -153,5 +190,5 @@ And that's what magic is to me, so ,thank you. (Applause)'''
     limit = 11  # 秘钥长度尝试的上限
     key = attack(ciphertext, limit)
     print(f'key: {key}')
-    # plaintext = decrypt(ciphertext, 'TEST')
-    # print(f'plaintext: {plaintext}')
+    plaintext = decrypt(ciphertext, key)
+    print(f'plaintext: {plaintext}')
