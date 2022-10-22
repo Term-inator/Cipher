@@ -91,7 +91,7 @@ def calCI(freq, length):
     """
     CI = 0
     for i in range(26):
-        CI += freq[i] / length * (freq[i] - 1)/(length - 1)
+        CI += freq[i] / length * (freq[i] - 1) / (length - 1)
     return CI
 
 
@@ -170,18 +170,13 @@ def removeOtherSymbol(text):
 
 if __name__ == '__main__':
     text = '''As a magician , I try to create images that make people stop and think
-
 I also try to challenge myself to do things that doctors say are not possible
-
 As a magician ,I try to show things to people that seem impossible
-
 And I think magic ,whether I am holding my breath or shuffling a deck of cards, is pretty simple
-
 It's practice, it's training.
-
 And it' s practice, it' s training and experimenting ,while pushing through the pain to be the best that I can be
-
 And that's what magic is to me, so ,thank you. (Applause)'''
+
     text = removeOtherSymbol(text)
     text = text.upper()
     ciphertext = encrypt(text, 'TEST')

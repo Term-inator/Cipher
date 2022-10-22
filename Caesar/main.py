@@ -61,7 +61,7 @@ def attack(ciphertext):
     freq = [0 for i in range(26)]
     for char in ciphertext:
         freq[getIndex(char)] += 1
-    for i in range(len(freq)):
+    for i in range(26):
         freq[i] /= n
 
     eps = 0.005
@@ -82,18 +82,13 @@ def removeOtherSymbol(text):
 
 if __name__ == '__main__':
     text = '''As a magician , I try to create images that make people stop and think
-
 I also try to challenge myself to do things that doctors say are not possible
-
 As a magician ,I try to show things to people that seem impossible
-
 And I think magic ,whether I am holding my breath or shuffling a deck of cards, is pretty simple
-
 It's practice, it's training.
-
 And it' s practice, it' s training and experimenting ,while pushing through the pain to be the best that I can be
-
 And that's what magic is to me, so ,thank you. (Applause)'''
+
     text = removeOtherSymbol(text)
     text = text.upper()
     ciphertext = encrypt(text, 10)
